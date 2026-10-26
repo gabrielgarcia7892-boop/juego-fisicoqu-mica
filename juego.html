@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio Virtual: Fisicoquímica</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0F172A;
+            color: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+            margin: 0;
+            padding: 10px;
+        }
+        .container {
+            background-color: var(--dark);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 600px;
+            padding: 25px;
+            text-align: center;
+            border: 2px solid #334155;
+        }
+        h1 {
+            color: var(--secondary);
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #334155;
+            border-radius: 10px;
+            margin: 15px 0;
+            height: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--secondary);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .question-box {
+            background-color: #334155;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            color: white;
+        }
+        .btn-tf {
+            background-color: var(--primary);
+        }
+        .btn-tf:hover {
+            background-color: #4338CA;
+            transform: translateY(-2px);
+        }
+        .btn-challenge {
+            background-color: var(--warning);
+            color: #0F172A;
+            text-align: left;
+            padding-left: 20px;
+        }
+        .btn-challenge:hover {
+            background-color: #D97706;
+            transform: translateY(-2px);
+        }
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            font-weight: bold;
+            font-size: 0.95rem;
+            text-align: left;
+        }
+        .correct { background-color: rgba(16, 185, 129, 0.2); color: var(--secondary); border: 1px solid var(--secondary); }
+        .incorrect { background-color: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+        
+        .special-challenge {
+            border: 2px dashed var(--warning);
+        }
+        .hidden { display: none; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 15px; color: #94A3B8; font-size: 0.9rem;}
+        #next-btn { background-color: var(--secondary); margin-top: 15px; display: none; width: 100%;}
+    </style>
+</head>
+<body>
+
+<div class="container" id="game-container">
+    <h1>🧪 Reto de Fisicoquímica</h1>
+    <div class="stats">
+        <span id="score-display">Puntaje: 0</span>
+        <span id="question-counter">Pregunta: 1/10</span>
+    </div>
+    
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <h2 id="stage-title" style="color: #94A3B8; font-size: 0.95rem;">Misión 1: Cambios en la materia</h2>
+
+    <div class="question-box" id="question-text">
+        Cargando la simulación...
+    </div>
+
+    <!-- Opciones Verdadero/Falso -->
+    <div class="options-container hidden" id="tf-options">
+        <button class="btn btn-tf" onclick="checkAnswer(true)">VERDADERO</button>
+        <button class="btn btn-tf" onclick="checkAnswer(false)">FALSO</button>
+    </div>
+
+    <!-- Opciones Desafío Múltiple (4 opciones) -->
+    <div class="options-container hidden" id="multiple-options">
+        <button class="btn btn-challenge" id="opt-0" onclick="checkChallenge(0)">Opción 1</button>
+        <button class="btn btn-challenge" id="opt-1" onclick="checkChallenge(1)">Opción 2</button>
+        <button class="btn btn-challenge" id="opt-2" onclick="checkChallenge(2)">Opción 3</button>
+        <button class="btn btn-challenge" id="opt-3" onclick="checkChallenge(3)">Opción 4</button>
+    </div>
+
+    <div class="feedback" id="feedback-box"></div>
+    <button class="btn" id="next-btn" onclick="nextStep()">Continuar ➔</button>
+</div>
+
+<script>
+    const questions = [
+        { text: "Derretir un cubito de hielo es un cambio químico porque el agua cambia de forma.", answer: false, explanation: "Falso. Sigue siendo agua (H2O), por lo tanto es un cambio FÍSICO." },
+        { text: "Cuando un clavo se oxida a la intemperie, ocurre un cambio químico.", answer: true, explanation: "Correcto. El hierro reacciona con el oxígeno creando una sustancia nueva (óxido)." },
+        { text: "Romper un vidrio en mil pedazos es un cambio físico.", answer: true, explanation: "Exacto. La forma cambia, pero el material sigue siendo vidrio." },
+        { text: "Digerir una hamburguesa en el estómago es un proceso puramente físico.", answer: false, explanation: "Falso. Los ácidos del estómago transforman la comida en nutrientes (cambio químico)." },
+        { text: "Disolver azúcar en el agua es un cambio físico.", answer: true, explanation: "Correcto. El azúcar no se transforma en otra cosa, solo se mezcla." },
+        
+        { text: "En el estado sólido, las partículas están muy separadas y se mueven libremente.", answer: false, explanation: "Falso. En los sólidos, las partículas están muy juntas y solo vibran en su lugar." },
+        { text: "Los gases adoptan la forma y el volumen del recipiente que los contiene.", answer: true, explanation: "Verdadero. Los gases se expanden hasta ocupar todo el espacio disponible." },
+        { text: "Los líquidos tienen forma propia y no cambian aunque los pasemos de recipiente.", answer: false, explanation: "Falso. Los líquidos no tienen forma propia, adoptan la del recipiente que los contiene." },
+        { text: "Un trozo de madera es un ejemplo clásico de estado sólido.", answer: true, explanation: "Verdadero. Mantiene su forma y volumen constantes." },
+        { text: "Al calentar un material, sus partículas suelen comenzar a moverse con mayor velocidad.", answer: true, explanation: "Correcto. Al aumentar la temperatura, aumenta la energía cinética de las partículas." }
+    ];
+
+    const challenges = {
+        5: { 
+            title: "⚡ DESAFÍO INTRUSO (Actividad Rápida) ⚡",
+            text: "¿Cuál de estos procesos NO pertenece al grupo porque es un cambio diferente a los demás?",
+            options: ["A) Encender un fósforo", "B) Hervir agua en la pava", "C) Hornear un bizcochuelo", "D) Que se pudra una manzana"],
+            correct: 1,
+            explanation: "¡Correcto! Hervir agua es un cambio FÍSICO (cambia de estado pero sigue siendo agua). Todos los demás son cambios químicos."
+        }
+    };
+
+    let currentIndex = 0;
+    let score = 0;
+
+    const questionText = document.getElementById('question-text');
+    const tfOptions = document.getElementById('tf-options');
+    const multipleOptions = document.getElementById('multiple-options');
+    const feedbackBox = document.getElementById('feedback-box');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress');
+    const scoreDisplay = document.getElementById('score-display');
+    const questionCounter = document.getElementById('question-counter');
+    const stageTitle = document.getElementById('stage-title');
+    const gameContainer = document.getElementById('game-container');
+
+    function loadStep() {
+        feedbackBox.style.display = 'none';
+        nextBtn.style.display = 'none';
+        tfOptions.classList.add('hidden');
+        multipleOptions.classList.add('hidden');
+        gameContainer.classList.remove('special-challenge');
+
+        const progressPercentage = (currentIndex / 10) * 100;
+        progressFill.style.width = progressPercentage + '%';
+        questionCounter.innerText = `Pregunta: ${currentIndex + 1}/10`;
+
+        if (currentIndex === 5) {
+            showChallenge(currentIndex);
+            return;
+        }
+
+        if(currentIndex >= 0 && currentIndex < 5) stageTitle.innerText = "Misión 1: Cambios Físicos vs Químicos";
+        if(currentIndex >= 6) stageTitle.innerText = "Misión 2: Estados de la Materia";
+
+        let q = questions[currentIndex];
+        questionText.innerText = q.text;
+        tfOptions.classList.remove('hidden');
+    }
+
+    function showChallenge(index) {
+        let challenge = challenges[index];
+        gameContainer.classList.add('special-challenge');
+        stageTitle.innerText = challenge.title;
+        stageTitle.style.color = "var(--warning)";
+        questionText.innerText = challenge.text;
+        
+        for (let i = 0; i < 4; i++) {
+            document.getElementById(`opt-${i}`).innerText = challenge.options[i];
+        }
+        
+        multipleOptions.classList.remove('hidden');
+        questionCounter.innerText = "Actividad Especial";
+    }
+
+    function checkAnswer(userAnswer) {
+        tfOptions.classList.add('hidden');
+        let q = questions[currentIndex];
+        let isCorrect = (userAnswer === q.answer);
+        showFeedback(isCorrect, q.explanation);
+    }
+
+    function checkChallenge(selectedOption) {
+        multipleOptions.classList.add('hidden');
+        let challenge = challenges[currentIndex];
+        let isCorrect = (selectedOption === challenge.correct);
+        showFeedback(isCorrect, challenge.explanation);
+    }
+
+    function showFeedback(isCorrect, explanation) {
+        feedbackBox.style.display = 'block';
+        if (isCorrect) {
+            score += 100;
+            scoreDisplay.innerText = `Puntaje: ${score}`;
+            feedbackBox.className = 'feedback correct';
+            feedbackBox.innerHTML = `✅ ¡CORRECTO! <br><br> ${explanation}`;
+        } else {
+            feedbackBox.className = 'feedback incorrect';
+            feedbackBox.innerHTML = `❌ INCORRECTO <br><br> ${explanation}`;
+        }
+        nextBtn.style.display = 'block';
+    }
+
+    function nextStep() {
+        currentIndex++;
+        stageTitle.style.color = "#94A3B8";
+        if (currentIndex < questions.length) {
+            loadStep();
+        } else {
+            finishGame();
+        }
+    }
+
+    function finishGame() {
+        progressFill.style.width = '100%';
+        stageTitle.innerText = "¡MISIÓN CUMPLIDA!";
+        questionText.innerHTML = `🎉 ¡Excelente trabajo en el laboratorio!<br>Puntaje final: <strong>${score} puntos</strong>.<br><br>¡Tema comprendido con éxito!`;
+        tfOptions.classList.add('hidden');
+        multipleOptions.classList.add('hidden');
+        feedbackBox.style.display = 'none';
+        nextBtn.style.display = 'none';
+    }
+
+    loadStep();
+</script>
+</body>
+</html>
